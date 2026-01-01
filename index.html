@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="Artist's Color Wheel - Explore color harmonies offline">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Color Wheel">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Artist's Color Wheel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a0a0a0;
+            --accent: #ff6b6b;
+            --border: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .app-header {
+            padding: max(env(safe-area-inset-top), 20px) 20px 20px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, transparent 100%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .app-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+
+        .app-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            letter-spacing: 0.3px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .color-wheel-section {
+            margin: 30px 0;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto 30px;
+            aspect-ratio: 1;
+        }
+
+        .color-wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            cursor: crosshair;
+            position: relative;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .wheel-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .harmony-marker {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            opacity: 0.9;
+            z-index: 9;
+        }
+
+        .input-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .hex-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .hex-input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: var(--text-primary);
+            font-family: 'Manrope', monospace;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .hex-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 24px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+        }
+
+        .photo-upload {
+            display: none;
+        }
+
+        .photo-picker-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .photo-picker-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .photo-preview-container {
+            margin-top: 16px;
+            display: none;
+            position: relative;
+        }
+
+        .photo-preview-container.active {
+            display: block;
+        }
+
+        .photo-preview {
+            width: 100%;
+            border-radius: 12px;
+            cursor: crosshair;
+            max-height: 300px;
+            object-fit: contain;
+            background: var(--bg-primary);
+        }
+
+        .photo-instruction {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .harmony-mode-selector {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0;
+            margin-bottom: 24px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .harmony-mode-selector::-webkit-scrollbar {
+            display: none;
+        }
+
+        .harmony-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .harmony-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .palette-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .color-swatch {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .color-swatch:active {
+            transform: scale(0.95);
+        }
+
+        .color-swatch-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .color-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 12px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .color-role {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(255, 255, 255, 0.95);
+            color: #0a0a0a;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .current-color-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .current-color-swatch {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .current-color-info {
+            flex: 1;
+        }
+
+        .current-color-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .current-color-value {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .color-swatch {
+            animation: fadeIn 0.3s ease backwards;
+        }
+
+        .color-swatch:nth-child(1) { animation-delay: 0.05s; }
+        .color-swatch:nth-child(2) { animation-delay: 0.1s; }
+        .color-swatch:nth-child(3) { animation-delay: 0.15s; }
+        .color-swatch:nth-child(4) { animation-delay: 0.2s; }
+        .color-swatch:nth-child(5) { animation-delay: 0.25s; }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1 class="app-title">Color Harmonies</h1>
+        <p class="app-subtitle">Explore & create beautiful color palettes</p>
+    </div>
+
+    <div class="container">
+        <div class="color-wheel-section">
+            <div class="wheel-container">
+                <canvas id="colorWheel" class="color-wheel"></canvas>
+                <div id="wheelCenter" class="wheel-center"></div>
+                <div id="wheelMarker" class="wheel-marker"></div>
+                <div id="harmonyMarkers"></div>
+            </div>
+
+            <div class="input-section">
+                <div class="current-color-display">
+                    <div id="currentColorSwatch" class="current-color-swatch"></div>
+                    <div class="current-color-info">
+                        <div class="current-color-label">Current Color</div>
+                        <div id="currentColorValue" class="current-color-value">#FF6B6B</div>
+                    </div>
+                </div>
+
+                <div class="hex-input-group">
+                    <input type="text" id="hexInput" class="hex-input" placeholder="#000000" maxlength="7">
+                    <button id="applyHex" class="btn">Apply</button>
+                </div>
+
+                <label for="photoUpload" class="photo-picker-btn">
+                    <span>📷</span>
+                    <span>Pick color from photo</span>
+                </label>
+                <input type="file" id="photoUpload" class="photo-upload" accept="image/*">
+                
+                <div id="photoPreviewContainer" class="photo-preview-container">
+                    <img id="photoPreview" class="photo-preview" alt="Photo preview">
+                    <p class="photo-instruction">Tap anywhere on the photo to pick a color</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="harmony-mode-selector" id="harmonyModes">
+            <button class="harmony-btn active" data-mode="analogous">Analogous</button>
+            <button class="harmony-btn" data-mode="monochromatic">Monochromatic</button>
+            <button class="harmony-btn" data-mode="triadic">Triad</button>
+            <button class="harmony-btn" data-mode="complementary">Complementary</button>
+            <button class="harmony-btn" data-mode="split">Split Comp.</button>
+            <button class="harmony-btn" data-mode="square">Square</button>
+            <button class="harmony-btn" data-mode="compound">Compound</button>
+            <button class="harmony-btn" data-mode="shades">Shades</button>
+        </div>
+
+        <div class="palette-section">
+            <h2 class="section-title" id="paletteTitle">Complementary Harmony</h2>
+            <div id="colorPalette" class="color-palette"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+    </script>
+</body>
+</html>
